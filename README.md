@@ -11,3 +11,5 @@ quarto render Han-Mai-M07-BigQuery-Looker-Studio.qmd
 ```
 
 The standalone HTML embeds its resources. Open it in a browser. To reproduce the reported query results, open BigQuery Studio in a project permitted to query public US datasets. Run each statement in `temperature-exercises.sql` independently, checking the scan estimate first. The SQL uses public data and creates no cloud tables or views.
+
+The CSVs contain the full BigQuery aggregates for the three chart exercises. Regenerate the standalone line and column figures with `Rscript make-charts.R` using ggplot2. Render the QMD with the figures present in `images/`.

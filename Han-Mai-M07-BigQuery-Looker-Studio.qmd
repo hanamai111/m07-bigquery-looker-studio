@@ -75,7 +75,7 @@ Li closes by linking the SQL and visualization skills to further analytics work.
 
 # BigQuery exercises and results
 
-The queries ran in BigQuery Sandbox using publicly available GSOD tables. Estimates were 16.26 KB for the one-year query, 1.24 GB for the annual series, 1.78 GB for the country-by-decade query, and 3.18 GB for the baseline comparison. Each standalone statement is in `temperature-exercises.sql`. The script uses fixed year bounds and filters the missing-value sentinel. A `LIMIT` on a final aggregate would leave the underlying scan in place.
+The queries ran in BigQuery Sandbox using publicly available GSOD tables. Estimates were 16.26 KB for the one-year query, 1.24 GB for the annual series, 1.78 GB for the country-by-decade query, and 3.18 GB for the baseline comparison. In the inspected schema, weather-table station and WBAN identifiers and year, month, and day fields are strings. `temp` is FLOAT64. The station reference fields `usaf`, `wban`, and `country` are strings. Each standalone exercise statement is in `temperature-exercises.sql`. The script uses fixed year bounds and filters the missing-value sentinel. A `LIMIT` on a final aggregate would leave the underlying scan in place.
 
 ## One-year mean and annual series
 
@@ -195,13 +195,17 @@ ORDER BY iso2;
 
 # Looker Studio practice design
 
-The course uses Looker Studio. The current landing page displayed **Data Studio** and required Google account authorization before report creation. A live connection and native dashboard therefore remain pending. The following field specifications describe how to reproduce the charts from the executed queries.
+The course uses Looker Studio. The current landing page displayed **Data Studio** and required Google account authorization before report creation. A live connection and native dashboard therefore remain pending. The line and grouped columns below are static R reproductions from the BigQuery exports. The ZIP includes the CSV extracts and chart script. The following field specifications describe how to reproduce the charts from the executed queries.
 
 | Chart and business question | Query, dimensions, and metric | Scope and interpretation |
 |---|---|---|
 | Line — how did the station mean vary over time? | Exercise 2, ascending year, average of mean temperature. Each year has one row. | 1929–2022; interpret with the station-day count and changing coverage. |
 | Grouped columns — how did levels differ across countries and decades? | Exercise 3, decade and country breakdown, average of mean temperature. Each available country-decade has one row. | Three countries through 1999; report missing groups and the partial 1920s decade. |
 | Filled map — how far above its baseline was each country? | Exercise 4, two-letter ISO country dimension, average of signed difference in Fahrenheit. Each country has one row. | 2001–2010 versus 1973–2022; disclose baseline overlap and station coverage. |
+
+![Annual station-day mean with a reference line. Source: executed BigQuery exercise 2.](images/annual-temperature.png)
+
+![Country-by-decade means. Source: executed BigQuery exercise 3.](images/country-decade-temperature.png)
 
 A live BigQuery version can expose a read-only query or dedicated view as its source. An exported aggregate CSV can support the same chart design as a static source. For an interactive map, use a country-year source that carries both annual mean and baseline, then filter the numeric year and average the delta. The aggregate comparison above uses a fixed window. A date-range control is suitable when the date field has a real Date type. Connector permissions and billing eligibility require verification before making any connection.
 
@@ -214,7 +218,7 @@ A live BigQuery version can expose a read-only query or dedicated view as its so
 - **Qualified Consultation Leads.** Define qualification with the client and record it in a controlled intake or CRM workflow. GA4 can report behavioral milestones. The qualified lead count requires a verified link to the qualification outcome and a definition for duplicates and test submissions.
 - **Dashboard delivery.** Publish consistent definitions for sessions, inquiry volume, and qualified leads. Use a daily mart for trends, session-grain data for segment comparisons, and a funnel view for the handoff from website traffic to intake.
 
-The published GA4-3 examples and GA4-5 mart use Google's historical obfuscated ecommerce sample. The existing prototype names are `v_daily_kpis`, `v_session_activity`, and `v_ecommerce_funnel`. A dashboard could reuse documented view fields to avoid repeated `UNNEST` logic. CEP11 records why the group used a public sample for preparation practice. Ecommerce purchase events are sample outcomes. Client export availability, verified form events, and inquiry-to-qualification linkage remain open dependencies for a production dashboard.
+The published GA4-3 examples and GA4-5 mart use Google's historical obfuscated ecommerce sample. A read-only BigQuery metadata check returned all three prototype objects as views: `v_daily_kpis`, `v_session_activity`, and `v_ecommerce_funnel`. A dashboard could reuse documented view fields to avoid repeated `UNNEST` logic. CEP11 records why the group used a public sample for preparation practice. Ecommerce purchase events are sample outcomes. Client export availability, verified form events, and inquiry-to-qualification linkage remain open dependencies for a production dashboard.
 
 # LinkedIn Learning Certificate of Completion
 
