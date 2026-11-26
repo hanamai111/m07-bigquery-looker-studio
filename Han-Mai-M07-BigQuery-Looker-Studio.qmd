@@ -1,0 +1,239 @@
+---
+title: "Data Analytics with Google Cloud BigQuery and Looker Studio"
+subtitle: "M07 — LinkedIn Learning Study Note"
+author: "Han Mai"
+date: today
+format:
+  html:
+    toc: true
+    toc-title: "Contents"
+    toc-depth: 3
+    number-sections: true
+    smooth-scroll: true
+    embed-resources: true
+execute:
+  echo: true
+  warning: false
+  message: false
+---
+
+# Assignment and course
+
+IBM 6500, MSDM, Cal Poly Pomona. Dr. Jae Min Jung's Canvas assignment asks students to follow the BigQuery and Looker Studio tutorial, summarize the learning in a headed Quarto report, and embed an image of the certificate after successful completion. Canvas listed November 24, 2026, at 11:59 p.m. as the due date and accepted QMD and HTML. The report uses embedded resources for standalone viewing.
+
+Yoyu Li's intermediate course was released May 31, 2023, and runs 1 hour, 5 minutes. Its case asks how weather-station temperatures changed over approximately nine decades. The learning objectives are to explore a public dataset, write and transform data with SQL, create a reporting source, and choose a visualization suited to the question (Li 2023).
+
+| Course section | Lessons | Transcript review | Practical work |
+|---|---:|---|---|
+| Introduction | 2 | Both reviewed | Established the analysis question and tools |
+| 1. Visualizing BigQuery Data as Line Charts in Looker Studio | 8 | All reviewed | Single-year mean and annual wildcard aggregation executed |
+| 2. Dimensions and Column Charts in Looker Studio | 6 | All reviewed | Station join and country-by-decade aggregation executed |
+| 3. Intermediate SQL Transformation and Geo Charts in Looker Studio | 4 | All reviewed | Three-country baseline comparison executed |
+| Conclusion | 1 | Reviewed | Consolidated takeaways |
+
+The demonstration descriptions below come from the lesson transcripts. Video playback and chapter quizzes were left for personal participation. The course lists three quizzes with 5, 4, and 2 questions and offers an exercise ZIP under **Overview → Exercise Files**. The download terms restrict distribution. The independent exercises below use public NOAA BigQuery tables and an explicit geographic mapping for three countries.
+
+# Course study notes
+
+## Introduction
+
+Li starts with a question before selecting a chart. The project moves from discovering and querying observations to presenting trends and differences. Familiarity with a Google Cloud project and basic SQL makes it easier to focus on analysis. In marketing, the equivalent starting point is a clearly scoped decision, such as whether a channel generated more qualified leads during a comparable campaign period.
+
+## Chapter 1 — Visualizing BigQuery data as line charts
+
+- **Introduction to Google Cloud BigQuery and Looker Studio.** BigQuery provides managed querying and storage. The reporting tool presents query results as interactive visualizations.
+- **Using a public dataset in BigQuery.** Locate NOAA GSOD under `bigquery-public-data.noaa_gsod`. Use the table preview to learn the observation grain, Schema to confirm field meanings and types, and Details to inspect size and location. Daily mean temperature is recorded in Fahrenheit.
+- **Running an SQL query in BigQuery.** Start from `SELECT` and `FROM`, then choose the fields the analysis needs. Selecting fewer columns can reduce bytes processed. Previewing a table is useful before writing a query.
+- **Aggregation functions in BigQuery.** Apply `AVG(temp)` to reduce many station-day readings to one mean. Alias the result so its meaning is clear in downstream reports.
+- **Aggregation across multiple tables in BigQuery.** Wildcard table names let SQL query multiple annual shards. Group by year, sort chronologically, and use a logical view when a reusable query definition is helpful. A logical view stores the SQL definition and can execute it again when queried.
+- **Creating a line chart in Looker Studio.** The first chart uses a course CSV of monthly sales. Start from a table, confirm the month dimension and revenue metric, and sort ascending by month before switching to a line.
+- **Challenge and solution.** Connect the NOAA annual mean view, use year and mean temperature, and add an average reference line. The challenge also suggests adding average daily maximum temperatures. Use a consistent axis and label the temperature unit.
+
+For a campaign report, a daily trend gives context for spikes and gaps. Confirm the date type and ordering before interpreting the shape of a line.
+
+## Chapter 2 — Dimensions and column charts
+
+- **Joining two datasets in BigQuery.** Weather observations have a station identifier. The station reference table supplies a country dimension. Confirm the keys and cardinality before joining so duplicated metadata does not multiply observations.
+- **Dimensions in line charts and column charts.** Compare the UK, US, and India by year in the 1940s. Year is the main dimension, country is the breakdown, and mean temperature uses Average when the chart combines more than one source row.
+- **String functions in BigQuery.** Extract three characters from the year using `SUBSTR`, then append `0s` to create a decade label. Use a separate sortable date or numeric key when the labels alone do not sort correctly.
+- **Updating an existing BigQuery data source.** Refresh the source fields after changing the underlying query so Looker Studio can see the decade field.
+- **Challenge and solution.** Use decade as the main dimension and sort ascending. The country breakdown provides grouped columns that make comparisons within each period easier.
+
+The same workflow can compare device or channel performance by period. For conversion rates, use the ratio of aggregated counts and keep the denominator available for context.
+
+## Chapter 3 — Intermediate SQL transformation and geo charts
+
+- **Creating a geo chart.** Li brings in an ISO country reference CSV and checks that the location field is typed as a country. Average the temperature metric at the chart's grain and check geographic matches.
+- **Anatomy of a complex SQL query.** First aggregate daily records to one country-year mean. Then calculate a baseline by country, join it to each country-year, and subtract to obtain a signed difference. The instructor describes materializing results in a destination table for reuse.
+- **Challenge and solution.** Compare selected years with a 50-year baseline. Use a filled map and color by average temperature difference. Configure a year filter or slider so a reader can choose the comparison window. The solution shows how a sum can produce misleading colors if multiple years are selected.
+
+A marketing analogue is comparing each market with its own baseline. A map of lead totals often reflects market size. A map of the change in qualification rate answers a different question and needs a volume threshold for interpretation.
+
+## Conclusion
+
+Li closes by linking the SQL and visualization skills to further analytics work. The transferable sequence is to define the question, verify the source grain, transform the records into the comparison grain, and verify that chart aggregation preserves the intended metric.
+
+# BigQuery exercises and results
+
+The queries ran in BigQuery Sandbox using publicly available GSOD tables. Estimates were 16.26 KB for the one-year query, 1.24 GB for the annual series, 1.78 GB for the country-by-decade query, and 3.18 GB for the baseline comparison. Each standalone statement is in `temperature-exercises.sql`. The script uses fixed year bounds and filters the missing-value sentinel. A `LIMIT` on a final aggregate would leave the underlying scan in place.
+
+## One-year mean and annual series
+
+The first query tests the meaning of the temperature field and checks the coverage of the 1929 extract. All 2,081 rows passed the temperature guard. Mean temperature was **49.24°F**. The annual exercise uses `_TABLE_SUFFIX` as its year key and returns 94 rows.
+
+| Year | Valid station-day readings | Mean °F |
+|---:|---:|---:|
+| 1929 | 2,081 | 49.24 |
+| 1945 | 262,266 | 59.91 |
+| 1971 | 486,185 | 40.03 |
+| 1973 | 2,038,672 | 50.40 |
+| 2000 | 2,546,978 | 54.68 |
+| 2022 | 3,994,699 | 55.39 |
+
+The endpoints differ by 6.15°F, with major changes in sample size and an abrupt dip around 1969–71. This statistic gives each available station-day equal weight. Station coverage, missingness, and observation mix affect the series, so the endpoint difference is unsuitable as an estimate of global climate change.
+
+```sql
+-- Run each SELECT independently in BigQuery Studio using GoogleSQL in the US.
+-- 1. Inspect coverage and reproduce the one-table AVG with a missing-value guard.
+SELECT COUNT(*) AS observations,
+       COUNTIF(temp < 9999.9) AS valid_observations,
+       ROUND(AVG(IF(temp < 9999.9, temp, NULL)), 2) AS mean_temp_f
+FROM `bigquery-public-data.noaa_gsod.gsod1929`;
+```
+
+```sql
+-- 2. One row per year. Bound the wildcard scan to the study years.
+SELECT _TABLE_SUFFIX AS year, COUNT(*) AS valid_observations,
+       ROUND(AVG(temp), 2) AS mean_temp_f
+FROM `bigquery-public-data.noaa_gsod.gsod*`
+WHERE _TABLE_SUFFIX BETWEEN '1929' AND '2022' AND temp < 9999.9
+GROUP BY year
+ORDER BY year;
+```
+
+## Three-country decade comparison
+
+The station lookup joins on USAF/station and WBAN. It keeps keys tied to a single country and aggregates by the decade and country. This adaptation uses all valid daily observations for each country-decade, so its averages are weighted by available station days. There were 21 returned groups. Selected rows follow.
+
+| Decade | Country | Observations | Mean °F |
+|---|---|---:|---:|
+| 1940s | India | 20,197 | 76.89 |
+| 1940s | United Kingdom | 19,404 | 49.59 |
+| 1940s | United States | 1,025,490 | 55.34 |
+| 1990s | India | 241,801 | 78.80 |
+| 1990s | United Kingdom | 873,078 | 49.36 |
+| 1990s | United States | 4,459,448 | 53.95 |
+
+The country levels differ substantially, and the 1940s and 1990s observation counts also differ. An absent group, such as India in the 1930s output, should appear as missing in a chart. The 1920s label covers only 1929. In a marketing analysis, the same join pattern attaches channel or region metadata while preserving observation counts.
+
+```sql
+-- 3. Join station metadata on both identifiers. Exclude ambiguous country mappings.
+WITH station_country AS (
+  SELECT usaf, wban, ANY_VALUE(st.country) AS country
+  FROM `bigquery-public-data.noaa_gsod.stations` AS st
+  WHERE country IS NOT NULL
+  GROUP BY usaf, wban
+  HAVING COUNT(DISTINCT st.country) = 1
+)
+SELECT CONCAT(SUBSTR(_TABLE_SUFFIX, 1, 3), '0s') AS decade,
+       country, COUNT(*) AS observations, ROUND(AVG(temp), 2) AS mean_temp_f
+FROM `bigquery-public-data.noaa_gsod.gsod*` AS w
+JOIN station_country AS s ON w.stn = s.usaf AND w.wban = s.wban
+WHERE _TABLE_SUFFIX BETWEEN '1929' AND '1999'
+  AND country IN ('UK', 'US', 'IN') AND temp < 9999.9
+GROUP BY decade, country
+ORDER BY decade, country;
+```
+
+## Country baseline and geographic comparison
+
+The fourth query first finds the mean of valid station-day records within each country-year. It averages 50 country-year means for the 1973–2022 baseline and compares the 2001–2010 mean against it. The baseline includes the comparison window. This independent adaptation uses three countries, recodes UK to ISO GB, and keeps the query read-only.
+
+| ISO country | Comparison years | Baseline years | Comparison °F | Baseline °F | Difference °F |
+|---|---:|---:|---:|---:|---:|
+| GB | 10 | 50 | 49.59 | 49.40 | +0.19 |
+| IN | 10 | 50 | 79.14 | 78.95 | +0.19 |
+| US | 10 | 50 | 54.25 | 54.20 | +0.05 |
+
+The UK and India tie at the displayed precision, and the US delta is smaller. A positive value means the sampled country-year means were higher in that comparison window. A within-country baseline is more comparable than raw temperature levels, although station coverage still matters. Use the same design to compare each market's campaign period with its own historical performance.
+
+```sql
+-- 4. Build a 50-year baseline with equal weight for each annual mean.
+-- Translate the GSOD UK code to ISO GB for the three-country map adaptation.
+WITH station_country AS (
+  SELECT usaf, wban, ANY_VALUE(st.country) AS country
+  FROM `bigquery-public-data.noaa_gsod.stations` AS st
+  WHERE country IS NOT NULL
+  GROUP BY usaf, wban
+  HAVING COUNT(DISTINCT st.country) = 1
+),
+annual AS (
+  SELECT SAFE_CAST(_TABLE_SUFFIX AS INT64) AS year,
+         CASE country WHEN 'UK' THEN 'GB' ELSE country END AS iso2,
+         AVG(temp) AS annual_f
+  FROM `bigquery-public-data.noaa_gsod.gsod*` AS w
+  JOIN station_country AS s ON w.stn = s.usaf AND w.wban = s.wban
+  WHERE _TABLE_SUFFIX BETWEEN '1973' AND '2022'
+    AND country IN ('UK', 'US', 'IN') AND temp < 9999.9
+  GROUP BY year, iso2
+),
+baseline AS (
+  SELECT iso2, AVG(annual_f) AS baseline_f, COUNT(*) AS baseline_years
+  FROM annual
+  GROUP BY iso2
+)
+SELECT a.iso2, COUNT(*) AS comparison_years, b.baseline_years,
+       ROUND(AVG(a.annual_f), 2) AS comparison_f,
+       ROUND(b.baseline_f, 2) AS baseline_f,
+       ROUND(AVG(a.annual_f) - b.baseline_f, 2) AS delta_f
+FROM annual AS a
+JOIN baseline AS b USING (iso2)
+WHERE a.year BETWEEN 2001 AND 2010
+GROUP BY a.iso2, b.baseline_years, b.baseline_f
+ORDER BY iso2;
+```
+
+# Looker Studio practice design
+
+The course uses Looker Studio. The current landing page displayed **Data Studio** and required Google account authorization before report creation. A live connection and native dashboard therefore remain pending. The following field specifications describe how to reproduce the charts from the executed queries.
+
+| Chart and business question | Query, dimensions, and metric | Scope and interpretation |
+|---|---|---|
+| Line — how did the station mean vary over time? | Exercise 2, ascending year, average of mean temperature. Each year has one row. | 1929–2022; interpret with the station-day count and changing coverage. |
+| Grouped columns — how did levels differ across countries and decades? | Exercise 3, decade and country breakdown, average of mean temperature. Each available country-decade has one row. | Three countries through 1999; report missing groups and the partial 1920s decade. |
+| Filled map — how far above its baseline was each country? | Exercise 4, two-letter ISO country dimension, average of signed difference in Fahrenheit. Each country has one row. | 2001–2010 versus 1973–2022; disclose baseline overlap and station coverage. |
+
+A live BigQuery version can expose a read-only query or dedicated view as its source. An exported aggregate CSV can support the same chart design as a static source. For an interactive map, use a country-year source that carries both annual mean and baseline, then filter the numeric year and average the delta. The aggregate comparison above uses a fixed window. A date-range control is suitable when the date field has a real Date type. Connector permissions and billing eligibility require verification before making any connection.
+
+# Application to PhD Orthodontics
+
+**Proposed workflow:** GA4 → BigQuery raw events → SQL transformations → analytics mart → Looker Studio dashboard → marketing decisions.
+
+- **Traffic and acquisition.** Store a session-grain view with landing page, source and medium, device and geography. Compare traffic and conversion rates at the same grain and specify session attribution and date rules.
+- **Consultation funnel.** Track landing, CTA click, form start, form completion, and qualification as distinct stages. Confirm event firing, deduplicate submissions, and reconcile valid inquiries with approved client intake records.
+- **Qualified Consultation Leads.** Define qualification with the client and record it in a controlled intake or CRM workflow. GA4 can report behavioral milestones. The qualified lead count requires a verified link to the qualification outcome and a definition for duplicates and test submissions.
+- **Dashboard delivery.** Publish consistent definitions for sessions, inquiry volume, and qualified leads. Use a daily mart for trends, session-grain data for segment comparisons, and a funnel view for the handoff from website traffic to intake.
+
+The published GA4-3 examples and GA4-5 mart use Google's historical obfuscated ecommerce sample. The existing prototype names are `v_daily_kpis`, `v_session_activity`, and `v_ecommerce_funnel`. A dashboard could reuse documented view fields to avoid repeated `UNNEST` logic. CEP11 records why the group used a public sample for preparation practice. Ecommerce purchase events are sample outcomes. Client export availability, verified form events, and inquiry-to-qualification linkage remain open dependencies for a production dashboard.
+
+# LinkedIn Learning Certificate of Completion
+
+**Pending personal completion.** LinkedIn Learning's certificate control was disabled and stated that all course content must be completed. The certificate image will be added to the private QMD and HTML after the official certificate is available and the name, title, and date can be verified.
+
+# References
+
+Jung, Jae Min. 2026. “M07—Data Analytics with Google Cloud BigQuery and Looker Studio.” IBM 6500, Cal Poly Pomona. [Canvas assignment](https://canvas.cpp.edu/courses/143274/assignments/1551038?module_item_id=5535902).
+
+Li, Yoyu. 2023. *Data Analytics with Google Cloud BigQuery and Looker Studio*. LinkedIn Learning, May 31. [Course](https://www.linkedin.com/learning/data-analytics-with-google-cloud-bigquery-and-looker-studio?contextUrn=urn%3Ali%3AlearningCollection%3A6562397415280906240&u=56973593).
+
+Mai, Han. n.d. [*GA4-3 — BigQuery First Five Queries*](https://hanamai111.github.io/ga4-3-bigquery-first-five-queries/).
+
+Mai, Han. n.d. [*GA4-5 — Analytics Mart v1*](https://hanamai111.github.io/ga4-5-analytics-mart-v1/).
+
+Mai, Han. n.d. [*CEP11 — Data Preparation for PhD Orthodontics*](https://hanamai111.github.io/cep11-data-preparation-phd-orthodontics/).
+
+# Appendix: Publication Links
+
+- [GitHub Repository](https://github.com/hanamai111/m07-bigquery-looker-studio)
+- [GitHub Pages Website](https://hanamai111.github.io/m07-bigquery-looker-studio/)
+- [LinkedIn Learning Course](https://www.linkedin.com/learning/data-analytics-with-google-cloud-bigquery-and-looker-studio?contextUrn=urn%3Ali%3AlearningCollection%3A6562397415280906240&u=56973593)
