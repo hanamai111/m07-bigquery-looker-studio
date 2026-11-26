@@ -195,7 +195,7 @@ ORDER BY iso2;
 
 # Looker Studio practice design
 
-The course uses Looker Studio. The current landing page displayed **Data Studio** and required Google account authorization before report creation. A live connection and native dashboard therefore remain pending. The line and grouped columns below are static R reproductions from the BigQuery exports. The ZIP includes the CSV extracts and chart script. The following field specifications describe how to reproduce the charts from the executed queries.
+The course uses Looker Studio. The current interface displayed **Data Studio**. The report editor opened, and its BigQuery connector stated that query charges go to the billing project. No billing-backed data connection was configured. The CSV connector requested separate authorization to upload data to Google Cloud Storage. A data-connected native dashboard remains pending. The line and grouped columns below are static R reproductions from the BigQuery exports. The ZIP includes the CSV extracts and chart script. The following field specifications describe how to reproduce the charts from the executed queries.
 
 | Chart and business question | Query, dimensions, and metric | Scope and interpretation |
 |---|---|---|
